@@ -1,0 +1,81 @@
+#!/usr/bin/env perl
+
+use v5.10;
+use strict;
+use warnings;
+
+use YAML::PP;
+use HTTP::Tiny;
+use JSON::MaybeXS;
+
+my $module_name = $ARGV[0] or die "Usage: $0 module_name";
+
+my $os_distro = 'Debian';
+my $os_distro_version = 'buster';
+my $db = YAML::PP->new->load_file('DB.yaml');
+
+get_os_package_list_for($module_name);
+
+
+sub get_os_packages_for {
+  my $distro = shift;
+  my $val = $db->{ $distro }->{ provided_in }->{ $os_distro }->{ $os_distro_version };
+  return [] if (not defined $val);
+  return $val if (ref($val) eq 'ARRAY');
+  return [ $val ];
+}
+
+sub get_os_package_list_for {
+  my $module = shift;
+  my $os_packages = [];
+  _get_os_package_list_for($module, $os_packages);
+  return $os_packages;
+}
+
+sub _get_os_package_list_for {
+  my ($module_name, $os_packages) = @_;
+
+say "Get deps for $module_name ";
+
+  my $release = get_release_for_module($module_name);
+  my @packages_for_deps = @{ get_os_packages_for($release) };
+
+  if (@packages_for_deps > 0) {
+    push @$os_packages, @packages_for_deps;
+  } else {
+    my $deps = get_release_dependencies(get_release_for_module($module_name));
+
+    foreach my $dep (@$deps) {
+      next if ($dep->{ phase } eq 'runtime' and $dep->{ relationship } eq 'requires');
+      _get_os_package_list_for($dep->{ module }, $os_packages);
+    }
+    return $os_packages;
+  }
+}
+
+use Data::Dumper;
+
+
+sub get_release_for_module {
+  my $module = shift;
+  state $cache = { };
+  return $cache->{ $module } if (exists $cache->{ $module });
+  my $ua = HTTP::Tiny->new;
+  my $result = $ua->get("https://fastapi.metacpan.org/v1/module/$module");
+  my $module_info = decode_json($result->{ content }) if ($result->{ success });
+  die "error getting module release for $module" if (not $result->{ success });
+  return $cache->{ $module } = $module_info->{ distribution };
+
+}
+
+sub get_release_dependencies {
+  my $release = shift;
+  state $cache = {};
+  return $cache->{ $release } if (exists $cache->{ $release });
+  my $ua = HTTP::Tiny->new;
+  my $result = $ua->get("https://fastapi.metacpan.org/v1/release/$release");
+  my $release_info = decode_json($result->{ content }) if ($result->{ success });
+  die "error getting release dependencies for $release" if (not $result->{ success });
+  return $cache->{ $release } = ($release_info->{ dependency } || [ ])
+}
+

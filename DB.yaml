@@ -1,0 +1,60 @@
+---
+RRDs:
+  provided_in:
+    Debian:
+      buster: librrds-perl
+Module-Build:
+  provided_in:
+    Debian:
+      buster: libmodule-build-perl
+RRD-Simple:
+libwww-perl:
+  provided_in:
+    Debian:
+      buster: libwww-perl
+File-chdir:
+  provided_in:
+    Debian:
+      buster: libfile-chdir-perl
+File-which:
+  provided_in:
+    Debian:
+      buster: libfile-which-perl
+File-ShareDir:
+  provided_in:
+    Debian:
+      buster: libfile-sharedir-perl
+Alien-RRDtool:
+  compile_needs:
+    Debian:
+      buster:
+       - libtest-requires-perl
+       - pkg-config
+       - libcairo2-dev
+       - libpango1.0-dev
+       - libxml2-dev
+IO-Socket-SSL:
+  provided_in:
+    Debian:
+      buster: libio-socket-ssl-perl
+  compile_needs:
+    Debian:
+      buster:
+        - libssl-dev
+        - zlib1g-dev
+Net-SSLeay:
+  provided_in:
+    Debian:
+      buster: libnet-ssleay-perl
+Moo:
+  provided_in:
+    Debian:
+      buster: libmoo-perl
+Moose:
+  provided_in:
+    Debian:
+      buster: libmoose-perl
+Test-Simple:
+  provided_in:
+    Debian:
+      buster: libtest-simple-perl
