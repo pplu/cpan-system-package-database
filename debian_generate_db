@@ -1,0 +1,17 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+open(my $pkglist, '-|', 'apt-cache search lib.*perl');
+while (my $line = <$pkglist>) {
+  chomp $line;
+  my ($pkg) = ($line =~ m/^(.*?) /);
+
+  my $pkg_info = `apt-cache show $pkg`;
+  my ($homepage) = ($pkg_info =~ m/Homepage: (.*)\n/);
+  $homepage = '' if (not defined $homepage);
+
+  print $pkg, " ", $homepage, "\n";
+}
+close $pkglist;
